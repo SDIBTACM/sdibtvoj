@@ -7,6 +7,7 @@ package judge.action;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,6 +32,7 @@ import com.opensymphony.xwork2.ActionContext;
 public class UserAction extends BaseAction implements ServletRequestAware {
 
     private static final long serialVersionUID = -4110838947220309361L;
+    private static Pattern validPasswordPattern = Pattern.compile("^\\S*(?=\\S*\\d)(?=\\S*[A-Z])(?=\\S*[a-z])\\S*$");
     private User user;
     private int uid;
     private String username;
@@ -128,8 +130,10 @@ public class UserAction extends BaseAction implements ServletRequestAware {
             json = "Username should have at least 2 characters and at most 16 characters!";
         } else if (nickname.length() > 20){
             json = "Nickname should have at most 20 characters!";
-        } else if (password.length() < 4 || password.length() > 30){
-            json = "Password should have at least 4 characters and at most 30 characters!";
+        } else if (password.length() < 6 || password.length() > 30){
+            json = "Password should have at least 6 characters and at most 30 characters!";
+        } else if (!validPasswordPattern.matcher(password).matches()) {
+            json = "Password must contain uppercase and lowercase letters and digits!";
         } else if (!password.equals(repassword)){
             json = "Two passwords are not the same!";
         } else if (userService.checkUsername(username)){
