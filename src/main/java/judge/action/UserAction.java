@@ -20,6 +20,7 @@ import judge.service.UserService;
 import judge.tool.CookieUtil;
 import judge.tool.MD5;
 import judge.tool.OnlineTool;
+import judge.tool.ValiImage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.ServletActionContext;
@@ -43,6 +44,9 @@ public class UserAction extends BaseAction implements ServletRequestAware {
     private String blog;
     private int share;
     private String password;
+
+    private String valistr;
+
     private String repassword;
     private String newpassword;
     private String redir;
@@ -61,6 +65,10 @@ public class UserAction extends BaseAction implements ServletRequestAware {
             return SUCCESS;
         }
 
+        /// 新增：读取输入验证码以及存储的验证码，并都转换为大写
+        String vCode = ValiImage.codeText.toUpperCase();
+        valistr = valistr.toUpperCase();
+
         User user = userService.getByUsername(username);
         if (user == null) {
             json = "Username not exists!";
@@ -76,36 +84,40 @@ public class UserAction extends BaseAction implements ServletRequestAware {
             baseService.addOrModify(userSession);
 
             json = "Username and password don't match!";
+        } else // 新增： 验证码判断
+            if(valistr == null || !valistr.equals(vCode)) {
+            json = "验证码错误";
         } else {
-            json = "success";
-            session.put("visitor", user);
+                json = "success";
+                session.put("visitor", user);
 
-            //In case this visitor has logged in, remove auto login token for him
-            String username = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
-            String token = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
-            autoLoginManager.removeToken(username, token);
+                //In case this visitor has logged in, remove auto login token for him
+                String username = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
+                String token = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
+                autoLoginManager.removeToken(username, token);
 
-            token = autoLoginManager.addUserEntry(user.getUsername());
-            CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY, user.getUsername());
-            CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY, token);
-            
-            for (Iterator iterator = session.keySet().iterator(); iterator.hasNext();) {
-                String key = (String) iterator.next();
-                if (key.matches("C\\d+")) {
-                    session.remove(key);
+                token = autoLoginManager.addUserEntry(user.getUsername());
+                CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY, user.getUsername());
+                CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY, token);
+
+                for (Iterator iterator = session.keySet().iterator(); iterator.hasNext();) {
+                    String key = (String) iterator.next();
+                    if (key.matches("C\\d+")) {
+                        session.remove(key);
+                    }
                 }
+
+                UserSession userSession = new UserSession();
+                userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
+                userSession.setLoginTime(new Date());
+                userSession.setUserAgent((String) session.get("user-agent"));
+                userSession.setIp((String) session.get("remoteAddr"));
+                userSession.setUser(user);
+                userSession.setLoginSuccess(1);
+                session.put("user-session", userSession);
+                baseService.addOrModify(userSession);
+
             }
-
-            UserSession userSession = new UserSession();
-            userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
-            userSession.setLoginTime(new Date());
-            userSession.setUserAgent((String) session.get("user-agent"));
-            userSession.setIp((String) session.get("remoteAddr"));
-            userSession.setUser(user);
-            userSession.setLoginSuccess(1);
-            session.put("user-session", userSession);
-            baseService.addOrModify(userSession);
-
         }
         return SUCCESS;
     }
