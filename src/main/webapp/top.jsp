@@ -26,6 +26,7 @@
                 <input type="text" id="username" name="username" class="text ui-widget-content ui-corner-all" style="ime-mode:disabled" />
                 <label for="password">Password *</label>
                 <input type="password" id="password" name="password" class="text ui-widget-content ui-corner-all" />
+                // 新增：验证码图片及输入框
                 <input type="text" name="valistr" id="valistr"/>
                 <img src="/ValiImage" onclick="javascript:newCode(this)" id="valiImage"/>
             </fieldset>
@@ -35,6 +36,8 @@
 		<p class="validateTips"></p><fieldset><div style="width:200px;float:left"><label for="username1">Username *</label><input type="text" id="username1" class="text ui-widget-content ui-corner-all" style="ime-mode:disabled" /><label for="password1">Password *</label><input type="password" id="password1" class="text ui-widget-content ui-corner-all" /><label for="repassword">Repeat *</label><input type="password" id="repassword" class="text ui-widget-content ui-corner-all" /><label for="nickname">Nickname</label><input type="text" id="nickname" class="text ui-widget-content ui-corner-all" /><label for="school">School</label><input type="text" id="school" class="text ui-widget-content ui-corner-all" /><label for="qq">QQ</label><input type="text" id="qq" class="text ui-widget-content ui-corner-all" /><label for="email">Email</label><input type="text" id="email" class="text ui-widget-content ui-corner-all" /><label for="share">Share code by default</label><br /><s:radio id="share" name="share" list="#{'0':'No', '1':'Yes'}" value="1" theme="simple" /></div><div style="width:200px;margin-left:20px;float:left"><label for="blog">Blog & Introduction</label><s:textarea id="blog" rows="25" cols="35" cssClass="text ui-widget-content ui-corner-all" /></div></fieldset>
 	</div>
 </s:if>
+// 新增：点击刷新验证码
+// 在原链接后面添加一个参数p 值为当前时间。
 <script>
     function newCode(param) {
         param.src = '/ValiImage?p=' + new Date.now();
