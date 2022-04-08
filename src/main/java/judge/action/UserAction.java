@@ -20,6 +20,7 @@ import judge.service.UserService;
 import judge.tool.CookieUtil;
 import judge.tool.MD5;
 import judge.tool.OnlineTool;
+import judge.tool.ValiImage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.ServletActionContext;
@@ -43,6 +44,9 @@ public class UserAction extends BaseAction implements ServletRequestAware {
     private String blog;
     private int share;
     private String password;
+
+    private String valistr;
+
     private String repassword;
     private String newpassword;
     private String redir;
@@ -55,57 +59,64 @@ public class UserAction extends BaseAction implements ServletRequestAware {
 
     private UserService userService;
 
-    public String login(){
+    public String login() {
         Map session = ActionContext.getContext().getSession();
         if (OnlineTool.isLoggedIn()) {
             return SUCCESS;
         }
 
-        User user = userService.getByUsername(username);
-        if (user == null) {
-            json = "Username not exists!";
-        } else if (StringUtils.length(password) > 80 || !user.getPassword().equals(MD5.getMD5(password))) {
-            UserSession userSession = new UserSession();
-            userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
-            userSession.setLoginTime(new Date());
-            userSession.setUserAgent((String) session.get("user-agent"));
-            userSession.setIp((String) session.get("remoteAddr"));
-            userSession.setUser(user);
-            userSession.setLoginSuccess(0);
-            session.put("user-session", userSession);
-            baseService.addOrModify(userSession);
-
-            json = "Username and password don't match!";
+        /// 新增：读取输入验证码以及存储的验证码，并都转换为大写
+        String vCode = ValiImage.codeText.toUpperCase();
+        valistr = valistr.toUpperCase();
+        // 判断验证码
+        if (!valistr.equals(vCode)) {
+            json = "验证码错误";
         } else {
-            json = "success";
-            session.put("visitor", user);
+            User user = userService.getByUsername(username);
+            if (user == null) {
+                json = "Username not exists!";
+            } else if (StringUtils.length(password) > 80 || !user.getPassword().equals(MD5.getMD5(password))) {
+                UserSession userSession = new UserSession();
+                userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
+                userSession.setLoginTime(new Date());
+                userSession.setUserAgent((String) session.get("user-agent"));
+                userSession.setIp((String) session.get("remoteAddr"));
+                userSession.setUser(user);
+                userSession.setLoginSuccess(0);
+                session.put("user-session", userSession);
+                baseService.addOrModify(userSession);
 
-            //In case this visitor has logged in, remove auto login token for him
-            String username = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
-            String token = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
-            autoLoginManager.removeToken(username, token);
+                json = "Username and password don't match!";
+            } else {
+                json = "success";
+                session.put("visitor", user);
 
-            token = autoLoginManager.addUserEntry(user.getUsername());
-            CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY, user.getUsername());
-            CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY, token);
-            
-            for (Iterator iterator = session.keySet().iterator(); iterator.hasNext();) {
-                String key = (String) iterator.next();
-                if (key.matches("C\\d+")) {
-                    session.remove(key);
+                //In case this visitor has logged in, remove auto login token for him
+                String username = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
+                String token = CookieUtil.getCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
+                autoLoginManager.removeToken(username, token);
+
+                token = autoLoginManager.addUserEntry(user.getUsername());
+                CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY, user.getUsername());
+                CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY, token);
+
+                for (Iterator iterator = session.keySet().iterator(); iterator.hasNext(); ) {
+                    String key = (String) iterator.next();
+                    if (key.matches("C\\d+")) {
+                        session.remove(key);
+                    }
                 }
+
+                UserSession userSession = new UserSession();
+                userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
+                userSession.setLoginTime(new Date());
+                userSession.setUserAgent((String) session.get("user-agent"));
+                userSession.setIp((String) session.get("remoteAddr"));
+                userSession.setUser(user);
+                userSession.setLoginSuccess(1);
+                session.put("user-session", userSession);
+                baseService.addOrModify(userSession);
             }
-
-            UserSession userSession = new UserSession();
-            userSession.setArriveTime(new Date(request.getSession().getCreationTime()));
-            userSession.setLoginTime(new Date());
-            userSession.setUserAgent((String) session.get("user-agent"));
-            userSession.setIp((String) session.get("remoteAddr"));
-            userSession.setUser(user);
-            userSession.setLoginSuccess(1);
-            session.put("user-session", userSession);
-            baseService.addOrModify(userSession);
-
         }
         return SUCCESS;
     }
@@ -117,37 +128,37 @@ public class UserAction extends BaseAction implements ServletRequestAware {
         autoLoginManager.removeToken(username, token);
         CookieUtil.removeCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
         CookieUtil.removeCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
-        
+
         request.getSession().invalidate();
         return SUCCESS;
     }
 
-    public String register(){
+    public String register() {
         json = null;
-        if (!username.matches("[0-9a-zA-Z_]+")){
+        if (!username.matches("[0-9a-zA-Z_]+")) {
             json = "Username should only contain digits, letters, or '_'s !";
-        } else if (username.length() < 2 || username.length() > 16){
+        } else if (username.length() < 2 || username.length() > 16) {
             json = "Username should have at least 2 characters and at most 16 characters!";
-        } else if (nickname.length() > 20){
+        } else if (nickname.length() > 20) {
             json = "Nickname should have at most 20 characters!";
-        } else if (password.length() < 6 || password.length() > 30){
+        } else if (password.length() < 6 || password.length() > 30) {
             json = "Password should have at least 6 characters and at most 30 characters!";
         } else if (!validPasswordPattern.matcher(password).matches()) {
             json = "Password must contain uppercase and lowercase letters and digits!";
-        } else if (!password.equals(repassword)){
+        } else if (!password.equals(repassword)) {
             json = "Two passwords are not the same!";
-        } else if (userService.checkUsername(username)){
+        } else if (userService.checkUsername(username)) {
             json = "Username has been registered!";
-        } else if (qq.length() > 15){
+        } else if (qq.length() > 15) {
             json = "QQ is too long!";
-        } else if (school.length() > 95){
+        } else if (school.length() > 95) {
             json = "School is too long!";
-        } else if (email.length() > 95){
+        } else if (email.length() > 95) {
             json = "Email is too long!";
-        } else if (blog.length() > 995){
+        } else if (blog.length() > 995) {
             json = "Blog is too long!";
         }
-        if (json != null){
+        if (json != null) {
             return SUCCESS;
         }
         User user = new User(username, MD5.getMD5(password));
@@ -169,7 +180,7 @@ public class UserAction extends BaseAction implements ServletRequestAware {
         return SUCCESS;
     }
 
-    public String toUpdate(){
+    public String toUpdate() {
         user = (User) baseService.query(User.class, uid);
         username = user.getUsername();
         nickname = user.getNickname();
@@ -184,21 +195,21 @@ public class UserAction extends BaseAction implements ServletRequestAware {
     }
 
 
-    public String update(){
+    public String update() {
         user = (User) baseService.query(User.class, uid);
         Map session = ActionContext.getContext().getSession();
         User cUser = (User) session.get("visitor");
-        if (user == null || cUser == null || cUser.getId() != user.getId()){
+        if (user == null || cUser == null || cUser.getId() != user.getId()) {
             return ERROR;
         }
-        if (!user.getPassword().equals(MD5.getMD5(password))){
+        if (!user.getPassword().equals(MD5.getMD5(password))) {
             this.addActionError("Enter the correct old password!");
         }
-        if (!newpassword.isEmpty() || !repassword.isEmpty()){
-            if (newpassword.length() < 4 || newpassword.length() > 30){
+        if (!newpassword.isEmpty() || !repassword.isEmpty()) {
+            if (newpassword.length() < 4 || newpassword.length() > 30) {
                 this.addActionError("Password should have at least 4 characters and at most 30 characters!");
             }
-            if (!newpassword.equals(repassword)){
+            if (!newpassword.equals(repassword)) {
                 this.addActionError("Passwords are not match!");
             }
             newpassword = MD5.getMD5(newpassword);
@@ -210,22 +221,22 @@ public class UserAction extends BaseAction implements ServletRequestAware {
                 user.setPassword(newpassword);
             }
         }
-        if (nickname.length() > 20){
+        if (nickname.length() > 20) {
             this.addActionError("Nickname should have at most 20 characters!");
         }
-        if (qq.length() > 15){
+        if (qq.length() > 15) {
             this.addActionError("QQ is too long!");
         }
-        if (school.length() > 95){
+        if (school.length() > 95) {
             this.addActionError("School is too long!");
         }
-        if (email.length() > 95){
+        if (email.length() > 95) {
             this.addActionError("Email is too long!");
         }
-        if (blog.length() > 995){
+        if (blog.length() > 995) {
             this.addActionError("Blog is too long!");
         }
-        if (!this.getActionErrors().isEmpty()){
+        if (!this.getActionErrors().isEmpty()) {
             return INPUT;
         }
         user.setNickname(nickname.trim());
@@ -249,94 +260,123 @@ public class UserAction extends BaseAction implements ServletRequestAware {
         json = OnlineTool.getCurrentUser() == null ? "false" : "true";
         return SUCCESS;
     }
-    
+
     public String getNewpassword() {
         return newpassword;
     }
+
     public void setNewpassword(String newpassword) {
         this.newpassword = newpassword;
     }
+
     public int getShare() {
         return share;
     }
+
     public void setShare(int share) {
         this.share = share;
     }
+
     public User getUser() {
         return user;
     }
+
     public void setUser(User user) {
         this.user = user;
     }
+
     public int getUid() {
         return uid;
     }
+
     public void setUid(int uid) {
         this.uid = uid;
     }
+
     public String getQq() {
         return qq;
     }
+
     public void setQq(String qq) {
         this.qq = qq;
     }
+
     public String getSchool() {
         return school;
     }
+
     public void setSchool(String school) {
         this.school = school;
     }
+
     public String getEmail() {
         return email;
     }
+
     public void setEmail(String email) {
         this.email = email;
     }
+
     public String getBlog() {
         return blog;
     }
+
     public void setBlog(String blog) {
         this.blog = blog;
     }
+
     public String getRedir() {
         return redir;
     }
+
     public void setRedir(String redir) {
         this.redir = redir;
     }
+
     public String getNickname() {
         return nickname;
     }
+
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
+
     public String getRepassword() {
         return repassword;
     }
+
     public void setRepassword(String repassword) {
         this.repassword = repassword;
     }
+
     public UserService getUserService() {
         return userService;
     }
+
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+
     public String getUsername() {
         return username;
     }
+
     public void setUsername(String username) {
         this.username = username;
     }
+
     public String getPassword() {
         return password;
     }
+
     public void setPassword(String password) {
         this.password = password;
     }
+
     public void setServletRequest(HttpServletRequest request) {
         this.request = request;
     }
+
     public void setAutoLoginManager(AutoLoginManager autoLoginManager) {
         this.autoLoginManager = autoLoginManager;
     }
