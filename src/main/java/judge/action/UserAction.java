@@ -6,6 +6,7 @@ package judge.action;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ import judge.tool.CookieUtil;
 import judge.tool.MD5;
 import judge.tool.OnlineTool;
 
+import judge.tool.ValiImage;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.interceptor.ServletRequestAware;
@@ -46,6 +48,9 @@ public class UserAction extends BaseAction implements ServletRequestAware {
     private String repassword;
     private String newpassword;
     private String redir;
+
+    private String captcha;
+
     private HttpServletRequest request;
 
     private AutoLoginManager autoLoginManager;
@@ -55,9 +60,19 @@ public class UserAction extends BaseAction implements ServletRequestAware {
 
     private UserService userService;
 
+
     public String login(){
         Map session = ActionContext.getContext().getSession();
         if (OnlineTool.isLoggedIn()) {
+            return SUCCESS;
+        }
+        // 验证码判断
+        String vcode = ValiImage.codeText;
+        vcode = vcode.toUpperCase(Locale.ROOT);
+        captcha = captcha.toUpperCase(Locale.ROOT);
+        System.out.println(captcha + " " + vcode);
+        if(!vcode.equals(captcha)) {
+            json = "Verification code error";
             return SUCCESS;
         }
 
@@ -88,7 +103,7 @@ public class UserAction extends BaseAction implements ServletRequestAware {
             token = autoLoginManager.addUserEntry(user.getUsername());
             CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY, user.getUsername());
             CookieUtil.addCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY, token);
-            
+
             for (Iterator iterator = session.keySet().iterator(); iterator.hasNext();) {
                 String key = (String) iterator.next();
                 if (key.matches("C\\d+")) {
@@ -117,7 +132,7 @@ public class UserAction extends BaseAction implements ServletRequestAware {
         autoLoginManager.removeToken(username, token);
         CookieUtil.removeCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_USERNAME_KEY);
         CookieUtil.removeCookie(ActionContext.getContext(), AutoLoginInterceptor.AUTO_LOGGIN_TOKEN_KEY);
-        
+
         request.getSession().invalidate();
         return SUCCESS;
     }
@@ -249,7 +264,15 @@ public class UserAction extends BaseAction implements ServletRequestAware {
         json = OnlineTool.getCurrentUser() == null ? "false" : "true";
         return SUCCESS;
     }
-    
+
+    public String getCaptcha() {
+        return captcha;
+    }
+
+    public void setCaptcha(String captcha) {
+        this.captcha = captcha;
+    }
+
     public String getNewpassword() {
         return newpassword;
     }
