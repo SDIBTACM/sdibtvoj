@@ -34,6 +34,8 @@ public class SDIBTLanguageFinder implements LanguageFinder {
         languageList.put("1", "C++");
         languageList.put("2", "Pascal");
         languageList.put("3", "Java");
+        languageList.put("4", "Ruby");
+        languageList.put("5", "Python");
         return languageList;
     }
 
