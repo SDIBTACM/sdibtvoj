@@ -1,9 +1,9 @@
 $(function(){
 
-	Vjudge.init();
-    
+    Vjudge.init();
+
     /////////////////////////////////////////////////////////////////////////////////
-    
+
     $("a.login").click(function(){
         var url = this.href;
         Vjudge.doIfLoggedIn(function(){
@@ -27,7 +27,7 @@ $(function(){
         });
         return false;
     });
-    
+
     if (location.href.indexOf("/contest/") >= 0) {
         $("#nav_contest").addClass("active");
     } else if (location.href.indexOf("/status") >= 0) {
@@ -37,7 +37,7 @@ $(function(){
     } else if (location.href.indexOf("/toIndex") >= 0) {
         $("#nav_home").addClass("active");
     }
-    
+
 });
 
 Vjudge = new function() {
@@ -45,20 +45,20 @@ Vjudge = new function() {
     var nextFunc;    // to do after logging in
     var loginDialog;
     var registerDialog;
-    
+
     //////////////////////////////////////////////////////////////
 
     /**
      * Call it on document ready
      */
     this.init = function() {
-    	Vjudge.enhance();
+        Vjudge.enhance();
         Vjudge.initDialogs();
         Vjudge.renderCurrentTime();
     };
 
     //////////////////////////////////////////////////////////////
-    
+
     this.enhance = function() {
         Date.prototype.format = function(format){
             var o = {
@@ -77,7 +77,7 @@ Vjudge = new function() {
                     format = format.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length));
             return format;
         };
-        
+
         $.widget( "custom.selectmenu", $.ui.selectmenu, {
             _renderItem: function( ul, item ) {
                 var li = $( "<li>", { text: item.label } );
@@ -88,10 +88,10 @@ Vjudge = new function() {
                     style: item.element.attr( "data-style" ),
                     "class": "ui-icon " + item.element.attr( "data-class" )
                 })
-                .appendTo( li );
+                    .appendTo( li );
                 return li.appendTo( ul );
             }
-        });    	
+        });
     };
 
     this.getServerTime = function() {
@@ -121,7 +121,7 @@ Vjudge = new function() {
             var absolute = new Date(parseInt(mills)).format("yyyy-MM-dd hh:mm:ss")
             var renderScheduler;
             var $widthNode = getWidthNode ? getWidthNode.call($this) : $();
-            
+
             var getRelativeSeconds = function() {
                 return (Vjudge.getServerTime().valueOf() - mills) / 1000;
             }
@@ -129,13 +129,13 @@ Vjudge = new function() {
                 var relativeSeconds = getRelativeSeconds();
                 var relativeSecondsAbs = Math.abs(relativeSeconds);
                 var prep = relativeSeconds > 0 ? "ago" : "later";
-                
+
                 return relativeSecondsAbs < 60 ? Math.round(relativeSecondsAbs) + " sec " + prep :
                     relativeSecondsAbs < 3600 ? Math.round(relativeSecondsAbs / 60) + " min " + prep :
                         relativeSecondsAbs < 86400 ? Math.round(relativeSecondsAbs / 3600) + " hr " + prep :
                             relativeSecondsAbs < 2592000 ? Math.round(relativeSecondsAbs / 86400) + " days " + prep :
                                 relativeSecondsAbs < 31536000 ? Math.round(relativeSecondsAbs / 2592000) + " months " + prep :
-                                        Math.round(relativeSecondsAbs / 31536000) + " years " + prep;
+                                    Math.round(relativeSecondsAbs / 31536000) + " years " + prep;
             };
             var getDefaultDisplay = function() {
                 return getRelative();
@@ -162,7 +162,7 @@ Vjudge = new function() {
                 $widthNode.trigger("updateTime");
             });
             $this.bind("updateTime", updateTime);
-            
+
             $widthNode.unbind("updateTime");
             $widthNode.bind("updateTime", function(){
                 if (isMouseIn) {
@@ -193,7 +193,7 @@ Vjudge = new function() {
         }
         return params;
     };
-    
+
     this.doIfLoggedIn = function(func) {
         $.post(basePath + "/user/checkLogInStatus.action", function(logInStatus){
             if (logInStatus == "true") {
@@ -204,7 +204,7 @@ Vjudge = new function() {
             }
         });
     };
-    
+
     this.initDialogs = function() {
         var updateTips = function(t) {
             var tips = $( "p.validateTips" );
@@ -222,14 +222,16 @@ Vjudge = new function() {
             modal: true,
             buttons: {
                 "Login": function() {
-                    var info = {username: $("#username").val(), password: $("#password").val()};
+                    var info = {username: $("#username").val(), password: $("#password").val(),
+                        captcha: $("#captcha").val()};
+                    console.log(info.captcha);
                     $("#login_form").submit();
                     $.post(basePath + '/user/login.action', info, function(data) {
                         if (data == "success") {
                             loginDialog.dialog( "close" );
                             nextFunc();
                         } else {
-                            updateTips(data);                        
+                            updateTips(data);
                         }
                     });
                 },
@@ -270,7 +272,7 @@ Vjudge = new function() {
                             registerDialog.dialog( "close" );
                             window.location.reload();
                         } else {
-                            updateTips(data);                        
+                            updateTips(data);
                         }
                     });
                 },
@@ -285,9 +287,9 @@ Vjudge = new function() {
             },
             create: function( event, ui ) {
             }
-        });        
+        });
     };
-    
+
     this.isScrolledIntoView = function(elem) {
         var docViewTop = $(window).scrollTop();
         var docViewBottom = docViewTop + $(window).height();
@@ -312,25 +314,25 @@ Vjudge = new function() {
 
     this.storage = new function(){
         var cache = {};
-		this.set = function(key, value, temp) {
-			try {
-			    (temp ? cache : localStorage)[key] = (typeof(value) == 'object') ? JSON.stringify(value) : value;
-			} catch (e) {
-				console.error(e);
-			}
-		};
-		this.get = function(key, defaultValue, temp) {
-		    var value = (temp ? cache : localStorage)[key];
-			if (!value) {
-				return defaultValue;
-			}
-			try {
-				return JSON.parse(value);
-			} catch (e) {
-				console.error(e);
-				return value;
-			}
-		};
-	};
-    
+        this.set = function(key, value, temp) {
+            try {
+                (temp ? cache : localStorage)[key] = (typeof(value) == 'object') ? JSON.stringify(value) : value;
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        this.get = function(key, defaultValue, temp) {
+            var value = (temp ? cache : localStorage)[key];
+            if (!value) {
+                return defaultValue;
+            }
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                console.error(e);
+                return value;
+            }
+        };
+    };
+
 };
