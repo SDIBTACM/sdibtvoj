@@ -65,7 +65,7 @@ public class BAILIANSubmitter extends CanonicalSubmitter {
             "sourceEncode", "base64",
             "contestId","3"
         );
-        client.post("/api/solution/submit/", entity, HttpStatusValidator.SC_OK);
+        client.post("/api/solution/submitv2/", entity, HttpStatusValidator.SC_OK);
              return null;
     }
 
