@@ -27,7 +27,7 @@ public class BAILIANQuerier extends AuthenticatedQuerier {
     @Override
     protected SubmissionRemoteStatus query(SubmissionInfo info, RemoteAccount remoteAccount, DedicatedHttpClient client) {
         String html = client.get("/practice/solution/" + info.remoteRunId).getBody();
-        Pattern pattern = Pattern.compile(info.remoteRunId + "/.+?class=\"result-.+?\">(.+?)</a></td>[\\s\\S]+?<td class=\"memory\">(.*?)kB</td>\\s+?<td class=\"spending-time\">(.*?)ms</td>");
+        Pattern pattern = Pattern.compile(info.remoteRunId + "/.+?class=\"result-right\">(.+?)</a>[\\s\\S]+?<dd>(.*?)kB</dd>[\\s\\S]+?<dd>(.*?)ms</dd>");
         Matcher matcher = pattern.matcher(html);
         Validate.isTrue(matcher.find());
         
