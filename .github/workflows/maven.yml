@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +22,8 @@ jobs:
     - name: Build with Maven
       run: mvn package 
     - name: staging
-      run:  mkdir staging && cp target/*.war staging
-    - uses: actions/upload-artifact@v2
+      run: mkdir staging && cp target/*.war staging
+    - uses: actions/upload-artifact@v4
       with:
         name: Package
         path: staging
