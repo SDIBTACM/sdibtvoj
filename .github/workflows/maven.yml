@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4  # 升级到 v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -24,10 +24,10 @@ jobs:
     - name: Build and test with Maven
       run: mvn -B clean package --file pom.xml
 
-    # 可选：上传构建产物
+    # 使用最新版 v4 上传产物
     - name: Upload artifact
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # 关键更新点
       with:
         name: target-artifacts
         path: target/*.jar
