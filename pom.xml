@@ -16,6 +16,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-utils</artifactId>
+          <version>3.4.1</version>
+      </dependency>
         <!-- Struts2 -->
         <dependency>
             <groupId>org.apache.struts</groupId>
@@ -266,7 +271,7 @@
             <plugin>
                 <groupId>com.samaxes.maven</groupId>
                 <artifactId>minify-maven-plugin</artifactId>
-                <version>1.7.6</version>
+                <version>1.7.4</version>
                 <executions>
                     <execution>
                         <id>default-minify</id>
