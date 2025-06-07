@@ -277,6 +277,8 @@
                         <id>default-minify</id>
                         <!-- <phase>package</phase> -->
                         <configuration>
+                            <skip>true</skip>
+
                             <cssSourceDir>/</cssSourceDir>
                             <cssSourceFiles>
                                 <cssSourceFile>jquery-ui-1.11.1.custom/jquery-ui.css</cssSourceFile>
@@ -312,9 +314,7 @@
                         <goals>
                             <goal>minify</goal>
                         </goals>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
+                      
                     </execution>
                 </executions>
             </plugin>
