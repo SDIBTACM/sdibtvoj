@@ -1,42 +1,27 @@
-name: Build Virtual Judge WAR
+name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ master ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
+    - uses: actions/checkout@v4
     - name: Set up JDK 8
       uses: actions/setup-java@v4
       with:
-        java-version: '8'
-        distribution: 'temurin'
-
-    - name: Cache local Maven repository
-      uses: actions/cache@v4
+        java-version: 8
+        distribution: temurin
+    - name: Build with Maven (skip minify)
+      run: mvn package -Dminify.skip=true
+    - name: staging
+      run: mkdir staging && cp target/*.war staging
+    - uses: actions/upload-artifact@v4
       with:
-        path: ~/.m2
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven
-
-    - name: Install plexus-utils manually (for minify plugin)
-      run: |
-        mvn dependency:get -Dartifact=org.codehaus.plexus:plexus-utils:3.3.0
-
-    - name: Build WAR package with Maven
-      run: mvn -B clean package --file pom.xml
-
-    - name: Archive WAR
-      uses: actions/upload-artifact@v4
-      with:
-        name: virtual-judge.war
-        path: target/virtual-judge.war
+        name: Package
+        path: staging
