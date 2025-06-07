@@ -312,6 +312,9 @@
                         <goals>
                             <goal>minify</goal>
                         </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
