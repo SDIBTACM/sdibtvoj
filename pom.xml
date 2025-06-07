@@ -16,11 +16,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-utils</artifactId>
-          <version>3.4.1</version>
-      </dependency>
         <!-- Struts2 -->
         <dependency>
             <groupId>org.apache.struts</groupId>
@@ -277,8 +272,6 @@
                         <id>default-minify</id>
                         <!-- <phase>package</phase> -->
                         <configuration>
-                            <skip>true</skip>
-
                             <cssSourceDir>/</cssSourceDir>
                             <cssSourceFiles>
                                 <cssSourceFile>jquery-ui-1.11.1.custom/jquery-ui.css</cssSourceFile>
@@ -314,7 +307,6 @@
                         <goals>
                             <goal>minify</goal>
                         </goals>
-                      
                     </execution>
                 </executions>
             </plugin>
