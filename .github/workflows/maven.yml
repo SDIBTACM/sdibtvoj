@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Build Virtual Judge WAR
 
 on:
   push:
@@ -11,17 +11,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
     - name: Set up JDK 8
       uses: actions/setup-java@v4
       with:
-        java-version: 8
-        distribution: temurin
-    - name: Build with Maven (skip minify)
-      run: mvn package -Dminify.skip=true
-    - name: staging
-      run: mkdir staging && cp target/*.war staging
-    - uses: actions/upload-artifact@v4
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
       with:
-        name: Package
-        path: staging
+        path: ~/.m2
+        key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          maven-${{ runner.os }}-
+
+    - name: Build WAR (skip minify plugin)
+      run: mvn -B clean package -Dminify.skip=true
+
+    - name: Upload WAR artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: virtual-judge.war
+        path: target/virtual-judge.war
