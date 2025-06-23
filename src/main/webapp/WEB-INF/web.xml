@@ -82,6 +82,14 @@
             <param-value>false</param-value>
         </init-param>
     </servlet>
+    <servlet>
+        <servlet-name>VerifyCodeImg</servlet-name>
+        <servlet-class>judge.tool.ValiImage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VerifyCodeImg</servlet-name>
+        <url-pattern>/verifyCodeImg</url-pattern>
+    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>dwr-invoker</servlet-name>
         <url-pattern>/dwr/*</url-pattern>
